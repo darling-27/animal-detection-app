@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../main.dart';
+import '../models/alert_data.dart';
+import '../widgets/alert_card.dart';
+import '../services/alert_service.dart';
 
-/// Alert screen for viewing and managing animal detection alerts
 class AlertScreen extends StatefulWidget {
   const AlertScreen({super.key});
 
@@ -9,98 +12,124 @@ class AlertScreen extends StatefulWidget {
   State<AlertScreen> createState() => _AlertScreenState();
 }
 
-class _AlertScreenState extends State<AlertScreen> {
-  String _selectedFilter = 'All';
+class _AlertScreenState extends State<AlertScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _pulseAnimation;
 
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'id': 1,
-      'title': 'Wild Boar Detected',
-      'zone': 'Zone B - North Sector',
-      'time': '10 minutes ago',
-      'severity': 'High',
-      'animalType': 'Wild Boar',
-      'imageUrl': null,
-      'latitude': 23.5432,
-      'longitude': 87.2341,
-    },
-    {
-      'id': 2,
-      'title': 'Deer Movement Detected',
-      'zone': 'Zone A - South Sector',
-      'time': '1 hour ago',
-      'severity': 'Low',
-      'animalType': 'Deer',
-      'imageUrl': null,
-      'latitude': 23.5412,
-      'longitude': 87.2311,
-    },
-    {
-      'id': 3,
-      'title': 'Fox Spotted',
-      'zone': 'Zone C - East Sector',
-      'time': '2 hours ago',
-      'severity': 'Medium',
-      'animalType': 'Fox',
-      'imageUrl': null,
-      'latitude': 23.5452,
-      'longitude': 87.2391,
-    },
-    {
-      'id': 4,
-      'title': 'Unknown Animal Detected',
-      'zone': 'Zone D - West Sector',
-      'time': '3 hours ago',
-      'severity': 'High',
-      'animalType': 'Unknown',
-      'imageUrl': null,
-      'latitude': 23.5392,
-      'longitude': 87.2291,
-    },
-    {
-      'id': 5,
-      'title': 'Bird Flock Activity',
-      'zone': 'Zone A - South Sector',
-      'time': '5 hours ago',
-      'severity': 'Low',
-      'animalType': 'Bird',
-      'imageUrl': null,
-      'latitude': 23.5402,
-      'longitude': 87.2301,
-    },
-  ];
+  Position? _userPosition;
+  bool _locationLoading = true;
+  final AlertService _alertService = AlertService();
 
-  List<Map<String, dynamic>> get _filteredAlerts {
-    if (_selectedFilter == 'All') return _alerts;
-    return _alerts
-        .where((alert) => alert['severity'] == _selectedFilter)
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _requestLocationPermission();
   }
 
-  Color _getSeverityColor(String severity) {
-    switch (severity) {
-      case 'High':
-        return AppTheme.alertRed;
-      case 'Medium':
-        return AppTheme.warningRed;
-      default:
-        return AppTheme.lightGreen;
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    setState(() => _locationLoading = true);
+
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() => _locationLoading = false);
+      if (mounted) {
+        _showLocationSnackbar(
+          'Location services are disabled. Please turn on GPS.',
+          actionLabel: 'Open Settings',
+          onAction: Geolocator.openLocationSettings,
+        );
+      }
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      setState(() => _locationLoading = false);
+      if (mounted) {
+        _showLocationSnackbar(
+          'Location permission permanently denied. Enable it in App Settings.',
+          actionLabel: 'App Settings',
+          onAction: Geolocator.openAppSettings,
+        );
+      }
+      return;
+    }
+
+    if (permission == LocationPermission.denied) {
+      setState(() => _locationLoading = false);
+      return;
+    }
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      if (mounted) {
+        setState(() {
+          _userPosition = position;
+          _locationLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Location fetch error: $e');
+      if (mounted) setState(() => _locationLoading = false);
     }
   }
 
-  IconData _getAnimalIcon(String animalType) {
-    switch (animalType.toLowerCase()) {
-      case 'wild boar':
-        return Icons.pets;
-      case 'deer':
-        return Icons.cruelty_free;
-      case 'fox':
-        return Icons.pets;
-      case 'bird':
-        return Icons.flutter_dash;
-      default:
-        return Icons.help_outline;
-    }
+  void _showLocationSnackbar(
+      String message, {
+        required String actionLabel,
+        required VoidCallback onAction,
+      }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.orange.shade800,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: actionLabel,
+          textColor: Colors.white,
+          onPressed: onAction,
+        ),
+      ),
+    );
+  }
+
+  double? _calculateDistance(AlertData alert) {
+    if (_userPosition == null) return null;
+    return Geolocator.distanceBetween(
+      _userPosition!.latitude,
+      _userPosition!.longitude,
+      alert.latitude,
+      alert.longitude,
+    );
+  }
+
+  String _formatDistance(double meters) {
+    if (meters < 1000) return '${meters.toStringAsFixed(0)}m away';
+    return '${(meters / 1000).toStringAsFixed(1)}km away';
   }
 
   @override
@@ -108,333 +137,197 @@ class _AlertScreenState extends State<AlertScreen> {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
+        title: const Text('Alerts'),
         backgroundColor: AppTheme.darkBackground,
-        title: const Text(
-          'Alerts',
-          style: TextStyle(color: AppTheme.white, fontWeight: FontWeight.bold),
-        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppTheme.white),
-            onPressed: () {
-              // Refresh alerts
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Filter Chips
-          Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildFilterChip('All'),
-                const SizedBox(width: 8),
-                _buildFilterChip('High'),
-                const SizedBox(width: 8),
-                _buildFilterChip('Medium'),
-                const SizedBox(width: 8),
-                _buildFilterChip('Low'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Alerts List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _filteredAlerts.length,
-              itemBuilder: (context, index) {
-                final alert = _filteredAlerts[index];
-                return _buildAlertCard(alert);
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.forestGreen,
-        onPressed: () {
-          // Create new alert manually
-          _showCreateAlertDialog(context);
-        },
-        child: const Icon(Icons.add, color: AppTheme.white),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String filter) {
-    final isSelected = _selectedFilter == filter;
-    return FilterChip(
-      label: Text(
-        filter,
-        style: TextStyle(
-          color: isSelected
-              ? AppTheme.white
-              : AppTheme.white.withValues(alpha: 0.7),
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() => _selectedFilter = filter);
-      },
-      backgroundColor: AppTheme.cardBackground,
-      selectedColor: AppTheme.forestGreen,
-      checkmarkColor: AppTheme.white,
-      side: BorderSide(
-        color: isSelected ? AppTheme.forestGreen : Colors.transparent,
-      ),
-    );
-  }
-
-  Widget _buildAlertCard(Map<String, dynamic> alert) {
-    final severityColor = _getSeverityColor(alert['severity']);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: severityColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Alert Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: severityColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getAnimalIcon(alert['animalType']),
-                    color: severityColor,
-                    size: 28,
-                  ),
+          if (_locationLoading)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.my_location),
+              tooltip: 'Refresh Location',
+              onPressed: _requestLocationPermission,
+            ),
+          IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+        ],
+      ),
+      body: StreamBuilder<List<AlertData>>(
+        stream: _alertService.getActiveAlerts(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.alertRed),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading alerts: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white54),
+              ),
+            );
+          }
+
+          final alerts = snapshot.data ?? [];
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // ── Pulse Alert Banner ──
+              AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: alerts.isEmpty ? 1.0 : _pulseAnimation.value,
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: alerts.isEmpty
+                              ? [AppTheme.darkGreen, AppTheme.forestGreen]
+                              : [AppTheme.alertRed, AppTheme.warningRed],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (alerts.isEmpty
+                                ? AppTheme.darkGreen
+                                : AppTheme.alertRed)
+                                .withValues(alpha: 0.5),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            alerts.isEmpty
+                                ? Icons.check_circle
+                                : Icons.warning_amber,
+                            color: AppTheme.white,
+                            size: 40,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  alerts.isEmpty
+                                      ? 'ALL CLEAR'
+                                      : '${alerts.length} ACTIVE ALERT${alerts.length > 1 ? 'S' : ''}',
+                                  style: const TextStyle(
+                                    color: AppTheme.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  alerts.isEmpty
+                                      ? 'No dangerous animals detected'
+                                      : 'Dangerous animals detected nearby',
+                                  style: TextStyle(
+                                    color:
+                                    AppTheme.white.withValues(alpha: 0.8),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              // ── Location Unavailable Banner ──
+              if (_userPosition == null && !_locationLoading) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: Colors.orange.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
                     children: [
-                      Text(
-                        alert['title'],
-                        style: const TextStyle(
-                          color: AppTheme.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      const Icon(Icons.location_off,
+                          color: Colors.orange, size: 20),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Location unavailable — distance cannot be calculated',
+                          style:
+                          TextStyle(color: Colors.orange, fontSize: 13),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        alert['animalType'],
-                        style: TextStyle(
-                          color: AppTheme.white.withValues(alpha: 0.6),
-                          fontSize: 14,
+                      TextButton(
+                        onPressed: _requestLocationPermission,
+                        child: const Text(
+                          'Enable',
+                          style: TextStyle(color: Colors.orange),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: severityColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    alert['severity'],
-                    style: TextStyle(
-                      color: severityColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
               ],
-            ),
-          ),
 
-          // Alert Details
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 16,
-                      color: AppTheme.white.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      alert['zone'],
-                      style: TextStyle(
-                        color: AppTheme.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time,
-                      size: 16,
-                      color: AppTheme.white.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      alert['time'],
-                      style: TextStyle(
-                        color: AppTheme.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.gps_fixed,
-                      size: 16,
-                      color: AppTheme.white.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Lat: ${alert['latitude']}, Long: ${alert['longitude']}',
-                      style: TextStyle(
-                        color: AppTheme.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              const SizedBox(height: 24),
 
-          // Action Buttons
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: AppTheme.white.withValues(alpha: 0.1)),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      // Navigate to map screen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MapScreen(),
-                        ),
-                      );
-                    },
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              // ── Alert Cards ──
+              if (alerts.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Column(
                       children: [
-                        Icon(Icons.map, size: 18, color: AppTheme.lightGreen),
-                        SizedBox(width: 8),
+                        Icon(Icons.shield, size: 64, color: Colors.white24),
+                        SizedBox(height: 16),
                         Text(
-                          'View Map',
-                          style: TextStyle(color: AppTheme.lightGreen),
+                          'No active alerts',
+                          style:
+                          TextStyle(color: Colors.white54, fontSize: 16),
                         ),
                       ],
                     ),
                   ),
-                ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: AppTheme.white.withValues(alpha: 0.1),
-                ),
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      // Mark alert as resolved
-                      _resolveAlert(alert['id']);
-                    },
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 18,
-                          color: AppTheme.lightGreen,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Resolve',
-                          style: TextStyle(color: AppTheme.lightGreen),
-                        ),
-                      ],
+                )
+              else
+                ...alerts.map((alert) {
+                  final distanceMeters = _calculateDistance(alert);
+                  final distanceText = distanceMeters != null
+                      ? _formatDistance(distanceMeters)
+                      : null;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: AlertCard(
+                      alert: alert,
+                      distanceText: distanceText,
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Resolve an alert - remove from active list
-  void _resolveAlert(int alertId) {
-    setState(() {
-      _alerts.removeWhere((alert) => alert['id'] == alertId);
-    });
-
-    // Show feedback
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Alert resolved successfully'),
-        backgroundColor: AppTheme.lightGreen,
-      ),
-    );
-  }
-
-  void _showCreateAlertDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
-        title: const Text(
-          'Create Alert',
-          style: TextStyle(color: AppTheme.white),
-        ),
-        content: const Text(
-          'Manual alert creation feature',
-          style: TextStyle(color: AppTheme.white),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+                  );
+                }),
+            ],
+          );
+        },
       ),
     );
   }

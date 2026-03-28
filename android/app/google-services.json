@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1031412747377",
+    "project_id": "iotanimal-2c984",
+    "storage_bucket": "iotanimal-2c984.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1031412747377:android:68afe0d83ca28c561adfd0",
+        "android_client_info": {
+          "package_name": "com.example.animal_detection"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1031412747377-6k72f09qn1h8qnbsassbrb87jibl52mo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.animal_detection",
+            "certificate_hash": "f0f7df4ac328235a4fb7d6c2f3198ac1b1302cef"
+          }
+        },
+        {
+          "client_id": "1031412747377-nf9rf9kf6331pklgmpcm2u3h1csl9oii.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnnZENBhX_igaSi9mFlHq72xcm95UTGRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1031412747377-nf9rf9kf6331pklgmpcm2u3h1csl9oii.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1031412747377-6lubuilj25lof51d2328srbtglphphai.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.animalDetection"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

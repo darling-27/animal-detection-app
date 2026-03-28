@@ -1,7 +1,13 @@
+import 'package:animal_detection/screens/roles_selection_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../main.dart';
 
-/// Splash screen displayed at app startup
+import '../provider/civilian_proivder.dart';
+import '../provider/office_provider.dart';
+import '../widgets/scan_animation_painter.dart';
+import 'dashboard_screen.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -12,36 +18,77 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  late Animation<double> _scanAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.elasticOut),
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.5,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
+    );
+
+    _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.9, curve: Curves.easeInOut),
+      ),
+    );
 
     _controller.forward();
-    _navigateToLogin();
+
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (mounted) {
+        _navigateToNextScreen();
+      }
+    });
   }
 
-  Future<void> _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+  void _navigateToNextScreen() {
+    final officerProvider =
+    Provider.of<OfficerProvider>(context, listen: false);
+    final civilianProvider =
+    Provider.of<CivilianProvider>(context, listen: false);
+
+    Widget nextScreen;
+
+    if (officerProvider.isLoggedIn) {
+      // Officer is already logged in — go straight to dashboard
+      nextScreen = const DashboardScreen();
+    } else if (civilianProvider.isLoggedIn) {
+      // Civilian is already logged in — go straight to dashboard
+      nextScreen = const DashboardScreen();
+    } else {
+      // No one is logged in — go to role selection
+      nextScreen = const RoleSelectionScreen();
     }
+
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override
@@ -54,65 +101,99 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.forestGreen.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.pets,
-                        size: 80,
-                        color: AppTheme.lightGreen,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Wild Animal\nDetection',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppTheme.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Protecting Wildlife, Saving Lives',
-                      style: TextStyle(
-                        color: AppTheme.lightGreen.withValues(alpha: 0.8),
-                        fontSize: 14,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.lightGreen,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppTheme.darkGreen,
+              AppTheme.darkBackground,
+              AppTheme.forestGreen.withValues(alpha: 0.3),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _opacityAnimation.value,
+                  child: Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppTheme.lightGreen.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  width: 3,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.pets,
+                                size: 80,
+                                color: AppTheme.lightGreen,
+                              ),
+                            ),
+                            SizedBox(
+                              width: 160,
+                              height: 160,
+                              child: CustomPaint(
+                                painter: ScanAnimationPainter(
+                                  progress: _scanAnimation.value,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'WILD GUARDIAN',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.white,
+                            letterSpacing: 4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Animal Detection System',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppTheme.white.withValues(alpha: 0.7),
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppTheme.lightGreen.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );

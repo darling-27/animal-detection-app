@@ -1,27 +1,58 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    
-    <!-- Internet permission for Google Maps -->
+
+    <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
-    
-    <!-- Notification permissions -->
+
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <!-- Notification & Alert permissions -->
+    <uses-permission android:name="android.permission.VIBRATE" />  <!-- ✅ Removed duplicate -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    
+
     <application
         android:label="animal_detection"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        
-        <!-- Google Maps API Key loaded from local.properties -->
+
+        <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${mapsApiKey}"/>
-        
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- ✅ ADD #1: FCM Default Notification Channel          -->
+        <!-- When app is in BACKGROUND/KILLED, FCM uses this     -->
+        <!-- channel to display notifications automatically.     -->
+        <!-- MUST match channel_id sent from app.py server       -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="wild_animal_alarm" />
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- ✅ ADD #2: FCM Default Notification Icon             -->
+        <!-- Icon shown in status bar for FCM notifications      -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- ✅ ADD #3: High Priority FCM (ensures immediate      -->
+        <!-- delivery even in Doze mode)                         -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,20 +61,34 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true">
+            <!-- ✅ showWhenLocked + turnScreenOn = alert shows on lock screen -->
+
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- ✅ ADD #4: Handle FCM notification click -->
+            <intent-filter>
+                <action android:name="FLUTTER_NOTIFICATION_CLICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
-        
-        <!-- Notification receiver for boot completed -->
-        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+
+        <!-- Notification receivers for scheduled/boot -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
@@ -51,11 +96,12 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
-        
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
