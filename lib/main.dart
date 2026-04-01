@@ -11,15 +11,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
-import 'screens/officer_login_screen.dart';
-import 'screens/civilian_login_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/map_screen.dart';
 import 'screens/alert_screen.dart';
 import 'screens/history_screen.dart';
-import 'screens/profile_screen.dart';
-
-import 'services/firebase_service.dart';
 import 'services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:async';
@@ -113,9 +107,7 @@ void _setupMessageOpenHandlers() {
   });
 
   // When app is opened from terminated state via notification
-  FirebaseMessaging.instance
-      .getInitialMessage()
-      .then((RemoteMessage? message) {
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
     if (message != null) {
       debugPrint('📲 App opened from terminated state via notification');
       debugPrint('   Data: ${message.data}');
@@ -273,7 +265,6 @@ class WildAnimalDetectionApp extends StatelessWidget {
         '/login': (context) => const RoleSelectionScreen(),
         '/home': (context) => const DashboardScreen(),
         '/alerts': (context) => const AlertScreen(),
-        '/map': (context) => const MapScreen(),
         '/history': (context) => const HistoryScreen(),
       },
     );

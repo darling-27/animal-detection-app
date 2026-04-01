@@ -12,11 +12,13 @@ const Color _kSeverityLow = Color(0xFFFFEA00);
 class AlertCard extends StatelessWidget {
   final AlertData alert;
   final String? distanceText;
+  final bool showMapOnTap;
 
   const AlertCard({
     super.key,
     required this.alert,
     this.distanceText,
+    this.showMapOnTap = false,
   });
 
   Color get _severityColor {
@@ -53,16 +55,18 @@ class AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timeFormatted =
-    DateFormat('hh:mm a · MMM dd').format(alert.timestamp);
+        DateFormat('hh:mm a · MMM dd').format(alert.timestamp);
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AlertMapScreen(alert: alert),
-          ),
-        );
+        if (showMapOnTap) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AlertMapScreen(alert: alert),
+            ),
+          );
+        }
       },
       child: Container(
         decoration: BoxDecoration(
@@ -132,12 +136,10 @@ class AlertCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                _severityColor.withValues(alpha: 0.2),
+                                color: _severityColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: _severityColor.withValues(
-                                      alpha: 0.5),
+                                  color: _severityColor.withValues(alpha: 0.5),
                                 ),
                               ),
                               child: Text(

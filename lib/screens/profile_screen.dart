@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               'Confirm Logout',
               style:
-              TextStyle(color: AppTheme.white, fontWeight: FontWeight.bold),
+                  TextStyle(color: AppTheme.white, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final officerProvider =
-      Provider.of<OfficerProvider>(context, listen: false);
+          Provider.of<OfficerProvider>(context, listen: false);
       final officer = officerProvider.officer;
 
       // Sign out from Firebase (clears FCM token)
@@ -87,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
-            (route) => false,
+        (route) => false,
       );
     } catch (e) {
       debugPrint('❌ Logout error: $e');
@@ -130,8 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.forestGreen.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
-                      border:
-                      Border.all(color: AppTheme.forestGreen, width: 3),
+                      border: Border.all(color: AppTheme.forestGreen, width: 3),
                     ),
                     child: Center(
                       child: Text(
@@ -172,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Staff ID
                   Container(
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppTheme.forestGreen.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
@@ -280,7 +279,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _locationEnabled = value;
                         });
                       },
-                      activeColor: AppTheme.forestGreen,
+                      activeTrackColor: AppTheme.forestGreen,
+                      activeThumbColor: AppTheme.forestGreen,
                     ),
                   ),
                 ],
@@ -338,13 +338,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: _isLoggingOut ? null : _handleLogout,
                   icon: _isLoggingOut
                       ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppTheme.white,
-                    ),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.white,
+                          ),
+                        )
                       : const Icon(Icons.logout),
                   label: Text(_isLoggingOut ? 'LOGGING OUT...' : 'LOGOUT'),
                   style: ElevatedButton.styleFrom(

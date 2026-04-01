@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../main.dart';
 import '../services/fcm_service.dart';
 import '../provider/civilian_proivder.dart';
-import 'map_screen.dart';
 import 'alert_screen.dart';
 import 'history_screen.dart';
 import 'civilian_profile_screen.dart';
@@ -32,7 +31,7 @@ class _CivilianDashboardScreenState extends State<CivilianDashboardScreen> {
 
   Future<void> _checkAndUpdateFCM() async {
     final civilianProvider =
-    Provider.of<CivilianProvider>(context, listen: false);
+        Provider.of<CivilianProvider>(context, listen: false);
 
     if (civilianProvider.civilian != null) {
       final civilianId = civilianProvider.civilian!.id;
@@ -50,7 +49,6 @@ class _CivilianDashboardScreenState extends State<CivilianDashboardScreen> {
 
   late final List<Widget> _screens = [
     const _CivilianDashboardHome(),
-    const MapScreen(),
     const AlertScreen(),
     const HistoryScreen(),
     const CivilianProfileScreen(),
@@ -79,10 +77,6 @@ class _CivilianDashboardScreenState extends State<CivilianDashboardScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard),
               label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.map),
-              label: 'Map',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.warning_amber),
@@ -301,15 +295,14 @@ class _CivilianDashboardHome extends StatelessWidget {
 
                 final dangerousDocs = snapshot.data!.docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  return isAnimalDetection(data) &&
-                      data['isDangerous'] == true;
+                  return isAnimalDetection(data) && data['isDangerous'] == true;
                 }).toList();
 
                 if (dangerousDocs.isEmpty) return const SizedBox.shrink();
 
                 // Show latest dangerous animal alert
                 final latest =
-                dangerousDocs.first.data() as Map<String, dynamic>;
+                    dangerousDocs.first.data() as Map<String, dynamic>;
                 final animalType = latest['animalType'] ?? 'Unknown';
                 final location = latest['location'] ?? 'Unknown area';
 
@@ -360,8 +353,7 @@ class _CivilianDashboardHome extends StatelessWidget {
                               Text(
                                 '${_capitalize(animalType)} spotted near $location. Stay alert!',
                                 style: TextStyle(
-                                  color:
-                                  AppTheme.white.withValues(alpha: 0.8),
+                                  color: AppTheme.white.withValues(alpha: 0.8),
                                   fontSize: 13,
                                 ),
                               ),
@@ -436,9 +428,9 @@ class _CivilianDashboardHome extends StatelessWidget {
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                      (context, index) {
+                  (context, index) {
                     final data =
-                    animalDocs[index].data() as Map<String, dynamic>;
+                        animalDocs[index].data() as Map<String, dynamic>;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -527,7 +519,8 @@ class _CivilianDashboardHome extends StatelessWidget {
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(Icons.pets, size: 64, color: Colors.white.withValues(alpha: 0.15)),
+            Icon(Icons.pets,
+                size: 64, color: Colors.white.withValues(alpha: 0.15)),
             const SizedBox(height: 16),
             const Text(
               'No animal sightings yet',
@@ -567,7 +560,8 @@ class _CivilianAnimalCard extends StatelessWidget {
     final location = data['location'] ?? 'Unknown Location';
     final latitude = (data['latitude'] ?? 0.0).toDouble();
     final longitude = (data['longitude'] ?? 0.0).toDouble();
-    final timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+    final timestamp =
+        (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
 
     return GestureDetector(
       onTap: () => _showDetailSheet(context),
@@ -577,9 +571,9 @@ class _CivilianAnimalCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: isDangerous
               ? Border.all(
-            color: AppTheme.alertRed.withValues(alpha: 0.5),
-            width: 1.5,
-          )
+                  color: AppTheme.alertRed.withValues(alpha: 0.5),
+                  width: 1.5,
+                )
               : null,
           boxShadow: [
             BoxShadow(
@@ -597,47 +591,47 @@ class _CivilianAnimalCard extends StatelessWidget {
             // ── Image Section ──
             ClipRRect(
               borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(16)),
+                  const BorderRadius.vertical(top: Radius.circular(16)),
               child: Stack(
                 children: [
                   imageUrl.isNotEmpty
                       ? Image.network(
-                    imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        height: 180,
-                        color: AppTheme.surfaceColor,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppTheme.earthBrown,
-                            strokeWidth: 2,
+                          imageUrl,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              height: 180,
+                              color: AppTheme.surfaceColor,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.earthBrown,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 180,
+                              color: AppTheme.surfaceColor,
+                              child: const Center(
+                                child: Icon(Icons.broken_image,
+                                    color: Colors.white24, size: 48),
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          height: 180,
+                          color: AppTheme.surfaceColor,
+                          child: const Center(
+                            child: Icon(Icons.pets,
+                                color: Colors.white24, size: 48),
                           ),
                         ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 180,
-                        color: AppTheme.surfaceColor,
-                        child: const Center(
-                          child: Icon(Icons.broken_image,
-                              color: Colors.white24, size: 48),
-                        ),
-                      );
-                    },
-                  )
-                      : Container(
-                    height: 180,
-                    color: AppTheme.surfaceColor,
-                    child: const Center(
-                      child: Icon(Icons.pets,
-                          color: Colors.white24, size: 48),
-                    ),
-                  ),
 
                   // Danger badge
                   if (isDangerous)
@@ -846,8 +840,7 @@ class _CivilianAnimalCard extends StatelessWidget {
                               _getSafetyTip(animalType),
                               style: TextStyle(
                                 fontSize: 12,
-                                color:
-                                AppTheme.white.withValues(alpha: 0.7),
+                                color: AppTheme.white.withValues(alpha: 0.7),
                               ),
                             ),
                           ),
@@ -917,15 +910,14 @@ class _CivilianAnimalCard extends StatelessWidget {
                       height: 250,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(
-                            height: 250,
-                            color: AppTheme.surfaceColor,
-                            child: const Center(
-                              child: Icon(Icons.broken_image,
-                                  color: Colors.white24, size: 48),
-                            ),
-                          ),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 250,
+                        color: AppTheme.surfaceColor,
+                        child: const Center(
+                          child: Icon(Icons.broken_image,
+                              color: Colors.white24, size: 48),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -943,8 +935,7 @@ class _CivilianAnimalCard extends StatelessWidget {
                             padding: const EdgeInsets.all(6),
                             margin: const EdgeInsets.only(right: 10),
                             decoration: BoxDecoration(
-                              color:
-                              AppTheme.alertRed.withValues(alpha: 0.2),
+                              color: AppTheme.alertRed.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.warning_rounded,
@@ -982,9 +973,8 @@ class _CivilianAnimalCard extends StatelessWidget {
                       icon: Icons.dangerous,
                       label: 'Danger Level',
                       value: isDangerous ? 'Dangerous' : 'Safe',
-                      valueColor: isDangerous
-                          ? AppTheme.alertRed
-                          : AppTheme.lightGreen,
+                      valueColor:
+                          isDangerous ? AppTheme.alertRed : AppTheme.lightGreen,
                     ),
                     _DetailRow(
                       icon: Icons.location_on,
@@ -996,7 +986,7 @@ class _CivilianAnimalCard extends StatelessWidget {
                         icon: Icons.my_location,
                         label: 'Coordinates',
                         value:
-                        '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}',
+                            '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}',
                       ),
                     _DetailRow(
                       icon: Icons.access_time,
@@ -1016,8 +1006,7 @@ class _CivilianAnimalCard extends StatelessWidget {
                           color: AppTheme.alertRed.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color:
-                            AppTheme.alertRed.withValues(alpha: 0.3),
+                            color: AppTheme.alertRed.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Column(
@@ -1042,8 +1031,7 @@ class _CivilianAnimalCard extends StatelessWidget {
                             Text(
                               _getDetailedSafetyTip(animalType),
                               style: TextStyle(
-                                color: AppTheme.white
-                                    .withValues(alpha: 0.8),
+                                color: AppTheme.white.withValues(alpha: 0.8),
                                 fontSize: 13,
                                 height: 1.5,
                               ),
@@ -1078,11 +1066,15 @@ class _CivilianAnimalCard extends StatelessWidget {
 
   String _getSafetyTip(String animalType) {
     final type = animalType.toLowerCase();
-    if (type.contains('tiger') || type.contains('lion') || type.contains('leopard')) {
+    if (type.contains('tiger') ||
+        type.contains('lion') ||
+        type.contains('leopard')) {
       return 'Keep distance! Do not approach. Contact forest department immediately.';
     } else if (type.contains('elephant')) {
       return 'Stay quiet and do not block its path. Move away slowly.';
-    } else if (type.contains('snake') || type.contains('cobra') || type.contains('python')) {
+    } else if (type.contains('snake') ||
+        type.contains('cobra') ||
+        type.contains('python')) {
       return 'Do not approach or provoke. Keep safe distance and call for help.';
     } else if (type.contains('bear')) {
       return 'Stay calm. Do not run. Back away slowly while facing the animal.';
@@ -1096,7 +1088,9 @@ class _CivilianAnimalCard extends StatelessWidget {
 
   String _getDetailedSafetyTip(String animalType) {
     final type = animalType.toLowerCase();
-    if (type.contains('tiger') || type.contains('lion') || type.contains('leopard')) {
+    if (type.contains('tiger') ||
+        type.contains('lion') ||
+        type.contains('leopard')) {
       return '• Keep a minimum distance of 100 meters\n'
           '• Do NOT run – it triggers chase instinct\n'
           '• Make loud noises to scare it away\n'

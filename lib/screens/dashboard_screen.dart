@@ -9,7 +9,6 @@ import '../models/detection_data.dart';
 import '../widgets/detection_card.dart';
 import '../services/fcm_service.dart';
 import '../provider/office_provider.dart';
-import 'map_screen.dart';
 import 'alert_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
@@ -34,15 +33,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _checkAndUpdateFCM() async {
     final officerProvider =
-    Provider.of<OfficerProvider>(context, listen: false);
+        Provider.of<OfficerProvider>(context, listen: false);
 
     if (officerProvider.officer != null) {
       final officerId = officerProvider.officer!.id;
       final fcmService = FCMService();
       await fcmService.initializeFCM(officerId, 'forestOfficer');
 
-      String? currentToken =
-      await FirebaseMessaging.instance.getToken();
+      String? currentToken = await FirebaseMessaging.instance.getToken();
 
       debugPrint("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       debugPrint("DASHBOARD INITIALIZED");
@@ -54,8 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const _DashboardHome(),
-    const MapScreen(),
-    const AlertScreen(),
+    const AlertScreen(showMapOnTap: true),
     const HistoryScreen(),
     const ProfileScreen(),
   ];
@@ -82,10 +79,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard),
               label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.map),
-              label: 'Map',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.warning_amber),
@@ -168,8 +161,7 @@ class _DashboardHome extends StatelessWidget {
                 if (snapshot.hasData) {
                   total = snapshot.data!.docs.length;
                   for (var doc in snapshot.data!.docs) {
-                    final data =
-                    doc.data() as Map<String, dynamic>;
+                    final data = doc.data() as Map<String, dynamic>;
                     if (data['isDangerous'] == true) dangerous++;
                     final loc = data['location'] as String?;
                     if (loc != null) zones.add(loc);
@@ -232,8 +224,7 @@ class _DashboardHome extends StatelessWidget {
                 .limit(20)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState ==
-                  ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
@@ -246,8 +237,7 @@ class _DashboardHome extends StatelessWidget {
                 );
               }
 
-              if (!snapshot.hasData ||
-                  snapshot.data!.docs.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
@@ -278,22 +268,16 @@ class _DashboardHome extends StatelessWidget {
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                    final data = docs[index].data()
-                    as Map<String, dynamic>;
+                  (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
 
                     final detection = DetectionData(
-                      animalType:
-                      data['animalType'] ?? 'Unknown',
-                      confidence: (data['confidence'] ?? 0)
-                          .toDouble(),
-                      timestamp:
-                      (data['timestamp'] as Timestamp?)
-                          ?.toDate() ??
+                      animalType: data['animalType'] ?? 'Unknown',
+                      confidence: (data['confidence'] ?? 0).toDouble(),
+                      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ??
                           DateTime.now(),
                       imageUrl: data['imageUrl'] ?? '',
-                      isDangerous:
-                      data['isDangerous'] ?? false,
+                      isDangerous: data['isDangerous'] ?? false,
                       latitude: 0.0, // Add if you store coords
                       longitude: 0.0,
                     );

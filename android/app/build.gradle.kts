@@ -21,6 +21,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.add("-Xlint:-options")
+    }
+
     dependencies {
         coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     }
@@ -39,7 +43,7 @@ android {
         val mapsApiKey = localProperties["MAPS_API_KEY"]?.toString() ?: "YOUR_API_KEY_MISSING"
         
         applicationId = "com.example.animal_detection"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName

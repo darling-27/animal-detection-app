@@ -6,7 +6,9 @@ import '../widgets/alert_card.dart';
 import '../services/alert_service.dart';
 
 class AlertScreen extends StatefulWidget {
-  const AlertScreen({super.key});
+  final bool showMapOnTap;
+
+  const AlertScreen({super.key, this.showMapOnTap = false});
 
   @override
   State<AlertScreen> createState() => _AlertScreenState();
@@ -99,10 +101,10 @@ class _AlertScreenState extends State<AlertScreen>
   }
 
   void _showLocationSnackbar(
-      String message, {
-        required String actionLabel,
-        required VoidCallback onAction,
-      }) {
+    String message, {
+    required String actionLabel,
+    required VoidCallback onAction,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -202,8 +204,8 @@ class _AlertScreenState extends State<AlertScreen>
                         boxShadow: [
                           BoxShadow(
                             color: (alerts.isEmpty
-                                ? AppTheme.darkGreen
-                                : AppTheme.alertRed)
+                                    ? AppTheme.darkGreen
+                                    : AppTheme.alertRed)
                                 .withValues(alpha: 0.5),
                             blurRadius: 20,
                             spreadRadius: 2,
@@ -240,7 +242,7 @@ class _AlertScreenState extends State<AlertScreen>
                                       : 'Dangerous animals detected nearby',
                                   style: TextStyle(
                                     color:
-                                    AppTheme.white.withValues(alpha: 0.8),
+                                        AppTheme.white.withValues(alpha: 0.8),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -259,12 +261,12 @@ class _AlertScreenState extends State<AlertScreen>
                 const SizedBox(height: 12),
                 Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.orange.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.4)),
+                    border:
+                        Border.all(color: Colors.orange.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -274,8 +276,7 @@ class _AlertScreenState extends State<AlertScreen>
                       const Expanded(
                         child: Text(
                           'Location unavailable — distance cannot be calculated',
-                          style:
-                          TextStyle(color: Colors.orange, fontSize: 13),
+                          style: TextStyle(color: Colors.orange, fontSize: 13),
                         ),
                       ),
                       TextButton(
@@ -303,8 +304,7 @@ class _AlertScreenState extends State<AlertScreen>
                         SizedBox(height: 16),
                         Text(
                           'No active alerts',
-                          style:
-                          TextStyle(color: Colors.white54, fontSize: 16),
+                          style: TextStyle(color: Colors.white54, fontSize: 16),
                         ),
                       ],
                     ),
@@ -322,6 +322,7 @@ class _AlertScreenState extends State<AlertScreen>
                     child: AlertCard(
                       alert: alert,
                       distanceText: distanceText,
+                      showMapOnTap: widget.showMapOnTap,
                     ),
                   );
                 }),

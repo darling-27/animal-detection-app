@@ -44,16 +44,15 @@ class CivilianProfileScreen extends StatelessWidget {
                   // Avatar
                   CircleAvatar(
                     radius: 45,
-                    backgroundColor:
-                    AppTheme.earthBrown.withValues(alpha: 0.3),
+                    backgroundColor: AppTheme.earthBrown.withValues(alpha: 0.3),
                     backgroundImage: civilian?.photoUrl != null &&
-                        civilian!.photoUrl!.isNotEmpty
+                            civilian!.photoUrl!.isNotEmpty
                         ? NetworkImage(civilian.photoUrl!)
                         : null,
                     child: civilian?.photoUrl == null ||
-                        civilian!.photoUrl!.isEmpty
+                            civilian!.photoUrl!.isEmpty
                         ? const Icon(Icons.person,
-                        size: 45, color: AppTheme.earthBrown)
+                            size: 45, color: AppTheme.earthBrown)
                         : null,
                   ),
                   const SizedBox(height: 16),
@@ -82,8 +81,8 @@ class CivilianProfileScreen extends StatelessWidget {
                   // Role badge
                   Container(
                     margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppTheme.earthBrown.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -104,7 +103,6 @@ class CivilianProfileScreen extends StatelessWidget {
                   // Member since
                   if (civilian?.createdAt != null) ...[
                     const SizedBox(height: 12),
-
                   ],
                 ],
               ),
@@ -313,7 +311,7 @@ class CivilianProfileScreen extends StatelessWidget {
           children: [
             Text(
               'Wildlife Watch helps civilians stay informed about '
-                  'wild animal sightings in their area using AI-powered detection.',
+              'wild animal sightings in their area using AI-powered detection.',
               style: TextStyle(
                   color: AppTheme.white.withValues(alpha: 0.7), height: 1.5),
             ),
@@ -335,10 +333,21 @@ class CivilianProfileScreen extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
